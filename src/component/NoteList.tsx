@@ -1,47 +1,78 @@
+import React, { useMemo} from 'react';
+import { Link } from 'react-router-dom';
 import { FormEvent, useRef, useState } from "react";
-import { v4 as uuidV4 } from 'uuid';
 import Creatable from 'react-select/creatable'
-import { NoteData, Tag } from "../App";
+import {  Note, Tag } from "../App";
 import { useNavigate } from "react-router-dom";
-type NoteFormProps = {
-  onSubmit: (data: NoteData) => void;
-  onAddTag: (tag: Tag) => void
-  avaiableTag:Tag[]
-};
+import NoteCard from './Note';
 
-function NoteForm({ onSubmit, onAddTag, avaiableTag }: NoteFormProps) {
-  const titleRef = useRef<HTMLInputElement>(null);
-  const markdownRef = useRef<HTMLTextAreaElement>(null);
+
+
+  
+// const notes: NoteData[] = [
+//     { id: '1', text: 'Note 1', tags: ['tag1', 'tag2','tag3', 'tag4', 'tag5']},
+//     { id: '2', text: 'Note 2', tags: ['tag3', 'tag4'] },
+//     { id: '3', text: 'Note 3', tags: ['tag5', 'tag6', 'tag4', 'tag4'] },
+// ];
+
+export type SimplifiedNotes = {
+  tags: Tag[],
+  title: string,
+  id:string  
+}
+
+type NoteListProps = {
+    avaiableTags: Tag[]
+    notes:SimplifiedNotes
+}
+const NodeList = ({ avaiableTags, notes}:NoteListProps) => {
+  const [title, setTitle] = useState("");
   const naviagte = useNavigate();
   const [selectedTag, setSelectedTag] = useState<Tag[]>([]);
-  interface Option {
-    value: string;
-    label: string;
-  }
+
+    
+    const filteredNotes = useMemo(() => {
+      return notes.filter(note => {
+        return (
+          (title === "" ||
+            note.title.toLowerCase().includes(title.toLowerCase())) &&
+          (selectedTag.length === 0 ||
+            selectedTag.every(tag =>
+              note.tags.some(noteTag => noteTag.id === tag.id)
+            ))
+        )
+      })
+    }, [title, selectedTag, notes])
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    onSubmit({
-      title: titleRef.current!.value,
-      markdown: markdownRef.current!.value,
-      tags: selectedTag,
-    });
+    // onSubmit({
+    //   title: titleRef.current!.value,
+    //   markdown: markdownRef.current!.value,
+    //   tags: selectedTag,
+    // });
 
     naviagte('..');
   }
-  // Handle form submission logic here
-  const options: Option[] = [
-    { value: "chocolate", label: "Chocolate" },
-    { value: "strawberry", label: "Strawberry" },
-    { value: "vanilla", label: "Vanilla" },
-  ];
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-pink-600 flex items-center justify-center px-4">
-      <div className="max-w-4xl w-full bg-white shadow-lg rounded-lg px-8 py-8 md:py-12">
+    return (
+      <>
+      <div className="my-4 px-10 md:px-4">
+          <div className='flex items-center justify-between'>
+      <h2 className="text-xl font-bold">Notes</h2>
+              <div className="flex items-center space-x-2 my-2">
+                  <Link  to={'/new'}>
+                      <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Create</button>
+                      </Link>
+        <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Edit</button>
+              </div>
+              </div>
+          {/* Render the list of notes here */}
+        </div> 
+      <div style={{backgroundImage:"url(https://www.inkdrop.app/static/masthead-bg-f4b0f2b95bae8748ba397d4d5a72a08d.jpg)", objectFit:'contain', backgroundPositionY: 'right 0'}} className="w-full min-h-screen min-w-full bg-white shadow-lg rounded-lg px-8 py-8 md:py-12">
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-wrap mx-2 mb-6">
-            <div className="w-full md:w-1/2 px-2">
+          <div  className="flex flex-wrap justify-between  mb-6">
+            <div className="w-full md:w-[35%] px-2">
               <label
                 htmlFor="title"
                 className="block ml-1 text-gray-800 text-xl font-semibold mb-1"
@@ -49,15 +80,16 @@ function NoteForm({ onSubmit, onAddTag, avaiableTag }: NoteFormProps) {
                 Title
               </label>
               <input
-                ref={titleRef}
+                onChange={(e) => setTitle(e.target.value)}
                 required
                 type="text"
                 id="title"
+                value={title}
                 className="w-full py-2 px-4 mb-4 rounded-md shadow-sm border border-[#8a2be2] focus:border-[#8a2be2] focus:outline-none focus:ring-blue-500"
                 placeholder="Enter a title"
               />
             </div>
-            <div className="w-full md:w-1/2 px-2">
+            <div className="w-full md:w-[35%] px-2">
               <label
                 htmlFor="tags"
                 className="block text-gray-800 ml-2 text-xl font-semibold mb-1"
@@ -75,7 +107,7 @@ function NoteForm({ onSubmit, onAddTag, avaiableTag }: NoteFormProps) {
               <Creatable
                 id="tags"
                 isMulti
-                options={avaiableTag.map(tag => {
+                options={avaiableTags.map(tag => {
                   return {
                     label: tag.label, value: tag.id
                   }
@@ -85,11 +117,11 @@ function NoteForm({ onSubmit, onAddTag, avaiableTag }: NoteFormProps) {
                 value={selectedTag.map((tag) => {
                   return { label: tag.label, value: tag.id };
                 })}
-                onCreateOption={label => {
-                  const newTag = { id: uuidV4(), label }
-                  onAddTag(newTag)
-                  setSelectedTag(prev =>  [...prev, newTag] )
-                }}
+                // onCreateOption={label => {
+                //   const newTag = { id: uuidV4(), label }
+                //   onAddTag(newTag)
+                //   setSelectedTag(prev =>  [...prev, newTag] )
+                // }}
                 onChange={(tags) => {
                   setSelectedTag(
                     tags.map((tag) => {
@@ -130,32 +162,18 @@ function NoteForm({ onSubmit, onAddTag, avaiableTag }: NoteFormProps) {
               />
             </div>
           </div>
-          <div className="mb-6">
-            <label
-              htmlFor="markdown"
-              className="block text-gray-800 ml-2 text-xl font-semibold mb-1"
-            >
-              Markdown
-            </label>
-            <textarea
-              required
-              id="markdown"
-              className="w-full py-2 px-4 mb-6 rounded-md shadow-sm border border-[#8a2be2] focus:outline-none focus:ring-blue-500 focus:border-[#8a2be2]"
-              placeholder="Enter markdown"
-              rows={6}
-              ref={markdownRef}
-            ></textarea>
-          </div>
-          <button
-            type="submit"
-            className="w-full font-bold py-3 text-white bg-gradient-to-br from-blue-600 to-pink-600 rounded-md hover:from-pink-600 hover:to-blue-600 transition duration-300 shadow-md"
-          >
-            Submit
-          </button>
-        </form>
-      </div>
+                </form>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  
+      {filteredNotes.map((note) => (
+        <div  key={note.id}>
+          <NoteCard id={note.id}  title={note.title} tags={note.tags} />
+        </div>
+      ))}
     </div>
+      </div>
+    </>
   );
-}
+};
 
-export default NoteForm;
+export default NodeList;
